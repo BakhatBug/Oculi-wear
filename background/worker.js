@@ -141,23 +141,58 @@ function todayKey() {
  * @param {number} warningMinutes - Minutes before bedtime for first warning.
  * @returns {{ phase: number, minutesLeft: number }}
  */
-function getBedtimePhase(bedtime, warningMinutes) {
-  const [h, m] = bedtime.split(":").map(Number);
+function getBedtimePhase(bedtime, warningMinutes, wakeTime = "07:00") {
+  const [bh, bm] = bedtime.split(":").map(Number);
+  const [wh, wm] = wakeTime.split(":").map(Number);
   const now = new Date();
-  const bed = new Date();
-  bed.setHours(h, m, 0, 0);
 
-  // Handle past-midnight bedtimes
-  if (bed.getHours() < 12 && now.getHours() > 12) {
-    bed.setDate(bed.getDate() + 1);
+  function makeTimeToday(h, m) {
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return d;
   }
 
-  const diffMin = (bed - now) / 60000;
+  const bed = makeTimeToday(bh, bm);
+  const wake = makeTimeToday(wh, wm);
 
-  if (diffMin <= 0) return { phase: 3, minutesLeft: 0 };
-  if (diffMin <= warningMinutes / 2) return { phase: 2, minutesLeft: Math.round(diffMin) };
-  if (diffMin <= warningMinutes) return { phase: 1, minutesLeft: Math.round(diffMin) };
-  return { phase: 0, minutesLeft: Math.round(diffMin) };
+  if (wake <= bed) {
+    wake.setDate(wake.getDate() + 1);
+  }
+
+  const bed1 = new Date(bed);   bed1.setDate(bed1.getDate() - 1);
+  const wake1 = new Date(wake); wake1.setDate(wake1.getDate() - 1);
+
+  const bed2 = new Date(bed);
+  const wake2 = new Date(wake);
+
+  const bed3 = new Date(bed);   bed3.setDate(bed3.getDate() + 1);
+  const wake3 = new Date(wake); wake3.setDate(wake3.getDate() + 1);
+
+  const windows = [
+    { bed: bed1, wake: wake1 },
+    { bed: bed2, wake: wake2 },
+    { bed: bed3, wake: wake3 }
+  ];
+
+  for (const w of windows) {
+    const warningStart = new Date(w.bed);
+    warningStart.setMinutes(warningStart.getMinutes() - warningMinutes);
+
+    if (now >= w.bed && now < w.wake) {
+        return { phase: 3, minutesLeft: 0 };
+    }
+    if (now >= warningStart && now < w.bed) {
+        const diffMin = (w.bed - now) / 60000;
+        if (diffMin <= warningMinutes / 2) return { phase: 2, minutesLeft: Math.round(diffMin) };
+        return { phase: 1, minutesLeft: Math.round(diffMin) };
+    }
+  }
+
+  const futureBeds = windows.map(w => w.bed).filter(b => b > now);
+  futureBeds.sort((a, b) => a - b);
+  const minLeft = Math.round((futureBeds[0] - now) / 60000);
+
+  return { phase: 0, minutesLeft: minLeft };
 }
 
 /**
@@ -285,8 +320,9 @@ async function ensureTabScripts(tab) {
   try {
     const ping = await chrome.tabs.sendMessage(tab.id, { type: "PING_DIMMER" });
     if (ping?.ok) return true;
-  } catch {
+  } catch (err) {
     /* content script not available yet */
+    console.debug(`[SCO] Script not ready on tab ${tab.id}: ${err.message}`);
   }
 
   try {
@@ -294,8 +330,8 @@ async function ensureTabScripts(tab) {
       target: { tabId: tab.id },
       files: ["content/dimmer.css"],
     });
-  } catch {
-    /* CSS may already exist or tab may reject CSS injection */
+  } catch (err) {
+    console.warn(`[SCO] Failed to inject CSS on tab ${tab.id}: ${err.message}`);
   }
 
   try {
@@ -303,8 +339,11 @@ async function ensureTabScripts(tab) {
       target: { tabId: tab.id },
       files: ["content/dimmer.js"],
     });
-  } catch {
-    /* Script may already exist or tab may reject script injection */
+    // Wait briefly for injected script to become ready
+    await new Promise(r => setTimeout(r, 100));
+  } catch (err) {
+    console.warn(`[SCO] Failed to inject script on tab ${tab.id}: ${err.message}`);
+    return false;
   }
 
   return true;
@@ -320,14 +359,23 @@ async function ensureTabScripts(tab) {
 async function broadcastDim(opacity, phase) {
   try {
     const tabs = await chrome.tabs.query({});
+    let sent = 0;
+    let failed = 0;
+    
     for (const tab of tabs) {
       if (!isInjectableTab(tab)) continue;
       try {
         await ensureTabScripts(tab);
         await chrome.tabs.sendMessage(tab.id, { type: "DIM", opacity, phase });
-      } catch {
-        /* restricted tab or page lifecycle issue — skip */
+        sent++;
+      } catch (err) {
+        failed++;
+        console.debug(`[SCO] Failed to dim tab ${tab.id}: ${err.message}`);
       }
+    }
+    
+    if (sent === 0 && failed > 0) {
+      console.warn(`[SCO] broadcastDim failed on all ${failed} tabs - check if content script is blocked`);
     }
   } catch (err) {
     console.error("broadcastDim error:", err);
@@ -344,8 +392,12 @@ async function broadcastEyeProtection(enabled, intensity) {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
       if (!isInjectableTab(tab)) continue;
-      await ensureTabScripts(tab);
-      chrome.tabs.sendMessage(tab.id, { type: "EYE_PROTECT", enabled, opacity }).catch(() => {});
+      try {
+        await ensureTabScripts(tab);
+        await chrome.tabs.sendMessage(tab.id, { type: "EYE_PROTECT", enabled, opacity });
+      } catch (err) {
+        console.debug(`[SCO] Failed to set eye protection on tab ${tab.id}: ${err.message}`);
+      }
     }
   } catch (err) {
     console.error("broadcastEyeProtection error:", err);
@@ -395,8 +447,12 @@ async function broadcastUndim() {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
       if (!isInjectableTab(tab)) continue;
-      await ensureTabScripts(tab);
-      chrome.tabs.sendMessage(tab.id, { type: "UNDIM" }).catch(() => {});
+      try {
+        await ensureTabScripts(tab);
+        await chrome.tabs.sendMessage(tab.id, { type: "UNDIM" });
+      } catch (err) {
+        console.debug(`[SCO] Failed to undim tab ${tab.id}: ${err.message}`);
+      }
     }
   } catch (err) {
     console.error("broadcastUndim error:", err);
@@ -412,15 +468,16 @@ async function activateDimming() {
     const {
       bedtime = "23:00",
       warningMinutes = 30,
+      wakeTime = "07:00",
       dimIntensity = 3,
       enabled = true,
       focusMode = false,
       doneTonightTs = null,
     } = await chrome.storage.local.get([
-      "bedtime", "warningMinutes", "dimIntensity", "enabled", "focusMode", "doneTonightTs",
+      "bedtime", "warningMinutes", "wakeTime", "dimIntensity", "enabled", "focusMode", "doneTonightTs",
     ]);
 
-    const { phase: schedulePhase, minutesLeft } = getBedtimePhase(bedtime, warningMinutes);
+    const { phase: schedulePhase, minutesLeft } = getBedtimePhase(bedtime, warningMinutes, wakeTime);
     let activePhase = schedulePhase;
 
     // If user said "done for tonight", skip automatic activation
@@ -492,8 +549,8 @@ async function broadcastFocusBlock() {
       try {
         await ensureTabScripts(tab);
         await chrome.tabs.sendMessage(tab.id, { type: "FOCUS_BLOCK" });
-      } catch {
-        /* restricted tab */
+      } catch (err) {
+        console.debug(`[SCO] Failed to block tab ${tab.id}: ${err.message}`);
       }
     }
   } catch (err) {
@@ -790,14 +847,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         case "GET_STATS": {
           const {
-            todayLog = [], bedtime = "23:00", warningMinutes = 30,
+            todayLog = [], bedtime = "23:00", warningMinutes = 30, wakeTime = "07:00",
             enabled = true, streak = 0, focusMode = false,
             weeklyLogs = {}, eyeProtection = false, eyeIntensity = 2,
           } = await chrome.storage.local.get([
-            "todayLog", "bedtime", "warningMinutes", "enabled", "streak", "focusMode",
+            "todayLog", "bedtime", "warningMinutes", "wakeTime", "enabled", "streak", "focusMode",
             "weeklyLogs", "eyeProtection", "eyeIntensity",
           ]);
-          const { phase, minutesLeft } = getBedtimePhase(bedtime, warningMinutes);
+          const { phase, minutesLeft } = getBedtimePhase(bedtime, warningMinutes, wakeTime);
           const totalMs = todayLog.reduce((s, e) => s + e.durationMs, 0);
 
           // Category breakdown (ms per category)
@@ -828,6 +885,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             sleepScore,
             streak,
             weeklyScores,
+          });
+          break;
+        }
+
+        case "GET_CURRENT_DIM_STATE": {
+          const {
+            enabled = true, dimIntensity = 3,
+            eyeProtection = false, eyeIntensity = 2,
+            bedtime = "23:00", warningMinutes = 30, wakeTime = "07:00"
+          } = await chrome.storage.local.get([
+            "enabled", "dimIntensity", "eyeProtection", "eyeIntensity",
+            "bedtime", "warningMinutes", "wakeTime"
+          ]);
+          
+          let dimOpacity = 0;
+          let activePhase = 0;
+          
+          if (enabled) {
+              const { phase } = getBedtimePhase(bedtime, warningMinutes, wakeTime);
+              activePhase = Math.max(phase, 1);
+              dimOpacity = phaseOpacity(dimIntensity, activePhase);
+          }
+          
+          const EYEMAP = { 1: 0.04, 2: 0.07, 3: 0.11, 4: 0.16, 5: 0.22 };
+          const eyeOpacity = EYEMAP[eyeIntensity] || 0.07;
+          
+          sendResponse({
+             enabled,
+             opacity: dimOpacity,
+             phase: activePhase,
+             eyeProtection,
+             eyeOpacity
           });
           break;
         }

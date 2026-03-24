@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Extension Artifacts
+*.zip
+*.crx
+*.pem
+
+# Internal Docs / Debugging Summaries
+DIMMER_FIX_SUMMARY.md
+task.md

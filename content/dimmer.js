@@ -92,16 +92,37 @@
 
   /* ── Messaging ── */
   const onMessage = (msg, sender, sendResponse) => {
-    switch (msg.type) {
-      case "PING_DIMMER": sendResponse({ ok: true }); break;
-      case "DIM": applyDim(msg.opacity, msg.phase); break;
-      case "UNDIM": removeDim(); break;
-      case "EYE_PROTECT": 
-        if (msg.enabled) applyEyeProtection(msg.opacity);
-        else removeEyeProtection();
-        break;
-      case "FOCUS_BLOCK": showFocusBlock(); break;
-      case "FOCUS_UNBLOCK": removeFocusBlock(); break;
+    try {
+      switch (msg.type) {
+        case "PING_DIMMER": 
+          sendResponse({ ok: true }); 
+          break;
+        case "DIM": 
+          console.log("[SCO] DIM message received:", { opacity: msg.opacity, phase: msg.phase });
+          applyDim(msg.opacity, msg.phase); 
+          break;
+        case "UNDIM": 
+          console.log("[SCO] UNDIM message received");
+          removeDim(); 
+          break;
+        case "EYE_PROTECT": 
+          console.log("[SCO] EYE_PROTECT message:", { enabled: msg.enabled, opacity: msg.opacity });
+          if (msg.enabled) applyEyeProtection(msg.opacity);
+          else removeEyeProtection();
+          break;
+        case "FOCUS_BLOCK": 
+          console.log("[SCO] FOCUS_BLOCK message received");
+          showFocusBlock(); 
+          break;
+        case "FOCUS_UNBLOCK": 
+          console.log("[SCO] FOCUS_UNBLOCK message received");
+          removeFocusBlock(); 
+          break;
+        default:
+          console.warn("[SCO] Unknown message type:", msg.type);
+      }
+    } catch (err) {
+      console.error("[SCO] Message handler error:", err);
     }
   };
 
@@ -113,49 +134,26 @@
   chrome.runtime.onMessage.addListener(onMessage);
 
   /* ── Initial State Sync ── */
-  chrome.storage.local.get(["enabled", "eyeProtection", "eyeIntensity", "bedtime", "warningMinutes", "dimIntensity"], (res) => {
-    try {
-      // Apply eye protection if enabled
+  try {
+    chrome.runtime.sendMessage({ type: "GET_CURRENT_DIM_STATE" }, (res) => {
+      if (chrome.runtime.lastError) {
+        console.warn("[SCO] Could not get initial state:", chrome.runtime.lastError);
+        return;
+      }
+      if (!res) return;
+      
+      console.log("[SCO] Initial state sync:", res);
+      
       if (res.eyeProtection) {
-        const OPACITY = { 1: 0.04, 2: 0.07, 3: 0.11, 4: 0.16, 5: 0.22 };
-        applyEyeProtection(OPACITY[res.eyeIntensity] || 0.07);
+        applyEyeProtection(res.eyeOpacity);
       }
-
-      // Apply dimming if enabled
+      
       if (res.enabled) {
-        const bedtime = res.bedtime || "23:00";
-        const warningMinutes = res.warningMinutes || 30;
-        const dimIntensity = res.dimIntensity || 3;
-
-        // Calculate current bedtime phase
-        const [h, m] = bedtime.split(":").map(Number);
-        const now = new Date();
-        const bed = new Date();
-        bed.setHours(h, m, 0, 0);
-
-        // Handle past-midnight bedtimes
-        if (bed.getHours() < 12 && now.getHours() > 12) {
-          bed.setDate(bed.getDate() + 1);
-        }
-
-        const diffMin = (bed - now) / 60000;
-        let phase = 0;
-        if (diffMin <= 0) phase = 3;
-        else if (diffMin <= warningMinutes / 2) phase = 2;
-        else if (diffMin <= warningMinutes) phase = 1;
-
-        // Calculate opacity based on phase
-        const base = [0, 0.15, 0.30, 0.55];
-        const scale = dimIntensity / 3;
-        const opacity = Math.min(base[phase] * scale, 0.85);
-
-        // Apply dimming (use at least phase 1 if enabled manually)
-        const effectivePhase = Math.max(phase, 1);
-        applyDim(opacity, effectivePhase);
+        applyDim(res.opacity, res.phase);
       }
-    } catch (e) {
-      console.warn("[SCO] Initial load error (likely invalidated context):", e);
-    }
-  });
+    });
+  } catch (e) {
+    console.warn("[SCO] Initial load error:", e);
+  }
 
 })();
