@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep Cycle Optimizer — Settings</title>
+  <style>
+    :root {
+      --navy:       #0f1729;
+      --navy-light: #1a2744;
+      --teal:       #0ea5a0;
+      --teal-glow:  rgba(14,165,160,0.25);
+      --purple:     #7c5cfc;
+      --purple-glow:rgba(124,92,252,0.2);
+      --amber:      #f59e0b;
+      --amber-glow: rgba(245,158,11,0.15);
+      --red:        #ef4444;
+      --green:      #22c55e;
+      --bg:         #0b1120;
+      --surface:    rgba(255,255,255,0.05);
+      --surface-2:  rgba(255,255,255,0.08);
+      --glass-border: rgba(255,255,255,0.1);
+      --text:       #e8eaf0;
+      --text-dim:   #8892a8;
+      --radius:     14px;
+      --radius-sm:  10px;
+      --font:       system-ui, -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::-webkit-scrollbar { width: 6px; }
+    body::-webkit-scrollbar-track { background: transparent; }
+    body::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 6px; }
+
+    /* ── Header ── */
+    .header {
+      position: relative;
+      padding: 32px 40px 28px;
+      background: linear-gradient(135deg, var(--navy) 0%, #1a2f5a 50%, #0d3d5c 100%);
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 70% 30%, var(--teal-glow) 0%, transparent 60%),
+                  radial-gradient(circle at 30% 70%, var(--purple-glow) 0%, transparent 60%);
+    }
+    .header-inner { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+    .header h1 {
+      font-size: 24px; font-weight: 800;
+      display: flex; align-items: center; gap: 10px; color: #fff;
+    }
+    .header p { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+    /* ── Container ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    /* ── Section Card ── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s;
+    }
+    .section:hover { border-color: rgba(255,255,255,0.16); }
+    .section-title {
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--teal); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .icon { font-size: 16px; }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.3px;
+    }
+    input[type="time"], select {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: var(--font);
+      background: var(--surface-2); color: var(--text);
+      transition: border-color 0.2s;
+    }
+    input[type="time"]:focus, select:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 3px var(--teal-glow);
+    }
+    select option { background: var(--navy); color: var(--text); }
+
+    /* Range slider */
+    input[type="range"] {
+      width: 100%; height: 6px; appearance: none;
+      background: var(--surface-2); border-radius: 3px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--teal);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 8px var(--teal-glow);
+      cursor: pointer; transition: transform 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .range-labels {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--text-dim); margin-top: 4px;
+    }
+    .range-value {
+      text-align: center; font-size: 20px; font-weight: 800;
+      color: var(--teal); margin-bottom: 8px;
+    }
+
+    /* Checkboxes */
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .checkbox-group label {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm); font-weight: 500;
+      cursor: pointer; transition: all 0.2s; font-size: 13px;
+      background: var(--surface);
+    }
+    .checkbox-group label:hover { border-color: rgba(255,255,255,0.18); }
+    .checkbox-group input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--teal);
+    }
+    .checkbox-group .cat-icon { font-size: 15px; }
+
+    /* Textarea */
+    textarea {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+      font-size: 13px; font-family: var(--font);
+      resize: vertical; min-height: 70px;
+      background: var(--surface-2); color: var(--text);
+      transition: border-color 0.2s;
+    }
+    textarea:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 3px var(--teal-glow);
+    }
+    .help-text { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 22px; border: none; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 6px;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn-primary { background: var(--teal); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 4px 16px var(--teal-glow); }
+    .btn-amber { background: var(--amber); color: var(--navy); }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--glass-border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.2); background: var(--surface); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── Premium ── */
+    .premium-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: linear-gradient(135deg, var(--purple), #a855f7);
+      color: #fff; letter-spacing: 0.5px; margin-left: 8px;
+    }
+    .premium-status {
+      font-size: 13px; color: var(--text-dim); margin-bottom: 14px;
+    }
+
+    /* Focus Mode section */
+    .focus-toggle-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; background: var(--surface-2);
+      border-radius: var(--radius-sm); margin-bottom: 12px;
+    }
+    .focus-toggle-row label { margin: 0; font-size: 13px; font-weight: 600; color: var(--text); }
+    .focus-toggle-row .desc { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+    .toggle {
+      position: relative; width: 38px; height: 20px;
+      appearance: none; background: rgba(255,255,255,0.12);
+      border-radius: 10px; outline: none; cursor: pointer;
+      transition: background 0.3s; flex-shrink: 0;
+    }
+    .toggle:checked { background: var(--teal); }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle:checked::after { transform: translateX(18px); }
+
+    /* ── Report Table ── */
+    .report-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px; margin-top: 12px;
+    }
+    .report-table th {
+      text-align: left; padding: 8px 10px;
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-dim);
+    }
+    .report-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--teal); color: #fff;
+      padding: 12px 28px; border-radius: 12px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 8px 30px rgba(14,165,160,0.3);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 9999; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; color: #000; }
+      .header, .section:not(#section-report), .toast { display: none; }
+      .container { max-width: 100%; padding: 0; }
+      #section-report { border: none; padding: 20px; background: #fff; }
+    }
+
+    /* ── Animations ── */
+    .section {
+      animation: fadeUp 0.4s ease-out both;
+    }
+    .container > :nth-child(1)  { animation-delay: 0.05s; }
+    .container > :nth-child(2)  { animation-delay: 0.10s; }
+    .container > :nth-child(3)  { animation-delay: 0.15s; }
+    .container > :nth-child(4)  { animation-delay: 0.20s; }
+    .container > :nth-child(5)  { animation-delay: 0.25s; }
+    .container > :nth-child(6)  { animation-delay: 0.30s; }
+    .container > :nth-child(7)  { animation-delay: 0.35s; }
+    .container > :nth-child(8)  { animation-delay: 0.40s; }
+    .container > :nth-child(9)  { animation-delay: 0.45s; }
+    .container > :nth-child(10) { animation-delay: 0.50s; }
+    .container > :nth-child(11) { animation-delay: 0.55s; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Bedtime suggestion ── */
+    .bedtime-suggestion {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(14,165,160,0.08);
+      border: 1px solid rgba(14,165,160,0.2);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+    }
+    .bedtime-suggestion span { color: var(--text-dim); }
+    .bedtime-suggestion strong { color: var(--teal); font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <h1>🌙 Sleep Cycle Optimizer</h1>
+      <p>Settings &amp; Preferences</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Bedtime -->
+    <div class="section">
+      <div class="section-title"><span class="icon">⏰</span> Bedtime</div>
+      <div class="field">
+        <label for="input-bedtime">Your bedtime</label>
+        <input type="time" id="input-bedtime" value="23:00">
+      </div>
+      <div class="field">
+        <label for="select-warning">Warning window</label>
+        <select id="select-warning">
+          <option value="15">15 minutes before</option>
+          <option value="30" selected>30 minutes before</option>
+          <option value="45">45 minutes before</option>
+          <option value="60">60 minutes before</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Wake Time & Sleep Goals -->
+    <div class="section">
+      <div class="section-title"><span class="icon">☀️</span> Wake Time &amp; Sleep Goals</div>
+      <div class="field">
+        <label for="input-wake-time">Wake up time</label>
+        <input type="time" id="input-wake-time" value="07:00">
+      </div>
+      <div class="field">
+        <label for="select-sleep-duration">Sleep duration target</label>
+        <select id="select-sleep-duration">
+          <option value="6">6 hours (minimum)</option>
+          <option value="7">7 hours</option>
+          <option value="8" selected>8 hours (recommended)</option>
+          <option value="9">9 hours</option>
+        </select>
+      </div>
+      <div class="bedtime-suggestion">
+        <span>Suggested bedtime</span>
+        <strong id="suggested-bedtime">11:00 PM</strong>
+      </div>
+    </div>
+
+    <!-- Dim Intensity -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🔅</span> Dim Intensity</div>
+      <div class="range-value" id="intensity-value">3</div>
+      <div class="field">
+        <input type="range" id="range-intensity" min="1" max="5" value="3" step="1">
+        <div class="range-labels">
+          <span>Subtle</span><span>Default</span><span>Strong</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focus Mode -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🎯</span> Focus Mode</div>
+      <div class="focus-toggle-row">
+        <input type="checkbox" class="toggle" id="toggle-focus-opt">
+        <label for="toggle-focus-opt">Enable Focus Mode</label>
+        <span class="desc">Blocks distractive sites during bedtime</span>
+      </div>
+      <div class="help-text">When enabled, navigating to a disruptive site during bedtime phase will show a blocked page instead of the site content.</div>
+    </div>
+
+    <!-- Eye Protection -->
+    <div class="section">
+      <div class="section-title"><span class="icon">👁️</span> Eye Protection</div>
+      <div class="focus-toggle-row">
+        <input type="checkbox" class="toggle" id="toggle-eye-opt">
+        <label for="toggle-eye-opt">Always-on warm tint</label>
+        <span class="desc">Reduces blue light all day</span>
+      </div>
+      <div class="help-text" style="margin-bottom:14px">Applies a warm amber filter to all websites to ease eye strain. Independent of bedtime dimming. Shortcut: <kbd style="background:var(--surface-2);padding:2px 6px;border-radius:4px;font-size:11px">Alt+Shift+E</kbd></div>
+      <div class="field">
+        <label for="range-eye-intensity">Filter strength &mdash; <span id="eye-intensity-value">2</span></label>
+        <input type="range" id="range-eye-intensity" min="1" max="5" value="2" step="1">
+        <div class="range-labels"><span>Subtle</span><span>Moderate</span><span>Strong</span></div>
+      </div>
+    </div>
+
+    <!-- Break Reminders -->
+    <div class="section">
+      <div class="section-title"><span class="icon">⏱️</span> Eye Break Reminders</div>
+      <div class="focus-toggle-row">
+        <input type="checkbox" class="toggle" id="toggle-breaks">
+        <label for="toggle-breaks">Enable break reminders</label>
+      </div>
+      <div class="help-text">Shows a banner on your current tab reminding you to look away — following the 20-20-20 rule (every 20 min, look 20 ft away for 20 s).</div>
+      <div class="field" id="break-interval-field" style="margin-top:14px; display:none">
+        <label for="select-break-interval">Remind every</label>
+        <select id="select-break-interval">
+          <option value="20">20 minutes (20-20-20 rule)</option>
+          <option value="25" selected>25 minutes (Pomodoro)</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">60 minutes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🏷️</span> Disruptive Categories</div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="cat-social" checked><span class="cat-icon">📱</span> Social Media</label>
+        <label><input type="checkbox" id="cat-streaming" checked><span class="cat-icon">🎬</span> Streaming</label>
+        <label><input type="checkbox" id="cat-news" checked><span class="cat-icon">📰</span> News</label>
+        <label><input type="checkbox" id="cat-messaging" checked><span class="cat-icon">💬</span> Messaging</label>
+      </div>
+      <div class="field" style="margin-top: 16px;">
+        <label for="textarea-domains">Custom domains</label>
+        <textarea id="textarea-domains" placeholder="one domain per line, e.g.&#10;example.com&#10;another-site.org"></textarea>
+        <div class="help-text">Enter one domain per line (no http:// needed)</div>
+      </div>
+    </div>
+
+    <!-- Data & Export -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📊</span> Data</div>
+      <div class="btn-group">
+        <button class="btn btn-outline" id="btn-export-csv">📥 Export CSV</button>
+        <button class="btn btn-outline" id="btn-export-json">📥 Export JSON</button>
+      </div>
+    </div>
+
+    <!-- Premium / Reports -->
+    <div class="section" id="section-report">
+      <div class="section-title"><span class="icon">👑</span> Premium <span class="premium-badge">PRO</span></div>
+      <p class="premium-status" id="premium-status">Free tier — Upgrade for weekly sleep reports &amp; analytics</p>
+      <div class="btn-group" id="premium-buttons">
+        <button class="btn btn-primary" id="btn-premium">Upgrade $1/month</button>
+        <button class="btn btn-outline" id="btn-verify" style="display:none;">I've subscribed</button>
+      </div>
+      <div id="report-area" style="display:none; margin-top: 16px;">
+        <p style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Latest Weekly Report</p>
+        <table class="report-table" id="report-table">
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody id="report-body"></tbody>
+        </table>
+        <div style="margin-top: 12px;">
+          <button class="btn btn-outline" id="btn-download-pdf">📄 Download as PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip Jar -->
+    <div class="section">
+      <div class="section-title"><span class="icon">💛</span> Tip Jar</div>
+      <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">
+        Enjoying the extension? Leave a one-time tip to support development.
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-amber" id="btn-tip-1">☕ $1</button>
+        <button class="btn btn-amber" id="btn-tip-3">🍕 $3</button>
+        <button class="btn btn-amber" id="btn-tip-5">🎉 $5</button>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="section">
+      <div class="section-title" style="color: var(--red);"><span class="icon">⚠️</span> Danger Zone</div>
+      <button class="btn btn-danger" id="btn-reset">🗑️ Reset All Settings</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Settings saved</div>
+  <script src="options.js"></script>
+</body>
+</html>

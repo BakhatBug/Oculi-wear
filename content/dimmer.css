@@ -1,0 +1,210 @@
+/* Sleep Cycle Optimizer — Dimmer Styles (content/dimmer.css) */
+
+/* ── Overlay ── */
+#sco-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0);
+  transition: background 1.2s ease;
+}
+#sco-overlay.active {
+  pointer-events: none;
+}
+
+/* ── Banner ── */
+#sco-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 340px;
+  padding: 18px 20px;
+  background: rgba(18, 18, 30, 0.92);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #e2e8f0;
+  animation: sco-slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sco-slideIn {
+  from { transform: translateY(20px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+#sco-banner .sco-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+#sco-banner .sco-title::before {
+  content: "🌙";
+  font-size: 18px;
+}
+
+#sco-banner .sco-msg {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #a5b4c8;
+}
+
+#sco-banner .sco-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+#sco-banner .sco-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+#sco-banner .sco-btn:hover {
+  transform: translateY(-1px);
+}
+#sco-banner .sco-btn:active {
+  transform: translateY(0);
+}
+
+#sco-banner .sco-btn-snooze {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+#sco-banner .sco-btn-snooze:hover {
+  background: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+#sco-banner .sco-btn-done {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+}
+#sco-banner .sco-btn-done:hover {
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+}
+
+/* ── Focus-mode block page ── */
+#sco-focus-block {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #0f0a1a 0%, #1a1035 50%, #0f0a1a 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #e2e8f0;
+}
+
+#sco-focus-block .sco-block-icon {
+  font-size: 64px;
+  animation: sco-float 3s ease-in-out infinite;
+}
+
+@keyframes sco-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+#sco-focus-block .sco-block-title {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#sco-focus-block .sco-block-msg {
+  font-size: 16px;
+  color: #a5b4c8;
+  max-width: 400px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Eye Protection Overlay ── */
+#sco-eye-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646; /* below bedtime overlay */
+  pointer-events: none;
+  background: rgba(255, 155, 40, 0.07);
+  transition: background 1s ease;
+}
+
+/* ── Break Reminder Banner ── */
+#sco-break-banner {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(18, 18, 30, 0.95);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245,158,11,0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  white-space: nowrap;
+  animation: sco-slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sco-slideDown {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);     opacity: 1; }
+}
+
+.sco-break-icon { font-size: 22px; }
+
+.sco-break-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fde68a;
+}
+
+.sco-break-sub {
+  font-size: 11px;
+  color: #a5b4c8;
+}
+
+.sco-break-dismiss {
+  background: none;
+  border: none;
+  color: #8892a8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.sco-break-dismiss:hover { color: #e2e8f0; background: rgba(255,255,255,0.08); }
