@@ -48,7 +48,7 @@ const DEFAULT_SETTINGS = {
     messaging: true,
   },
   customDomains: [],
-  enabled: true,
+  enabled: false,
   focusMode: false,
   eyeProtection: false,
   eyeIntensity: 2,
